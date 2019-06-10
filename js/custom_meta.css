@@ -1,0 +1,6 @@
+.custom_meta:hover{
+    background-color: aqua;
+}
+.custom_meta.custom_meta_clicked{
+     background-color: red;
+ }

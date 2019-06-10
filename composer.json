@@ -1,0 +1,21 @@
+{
+  "name": "ILIAS/Plugins/UIHookDemo",
+  "authors": [
+    {
+      "name": "Timon Amstutz",
+      "email": "timon.amstutz@ilub.unibe.ch"
+    }
+  ],
+  "require-dev": {
+
+  },
+  "autoload": {
+    "psr-4": {
+      "ILIAS\\" : "../../../../src",
+      "ILIAS\\Plugins\\UIHookDemo\\": "src/"
+    },
+    "classmap": [
+        "../../../../../../../Services/Component/classes/"
+    ]
+  }
+}
