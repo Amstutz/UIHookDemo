@@ -40,37 +40,56 @@ class ilUIHookDemoPlugin extends ilUserInterfaceHookPlugin {
 	}
 
 	/**
-	 * This methods allows to extend the dependency injection container of ILIAS after initialization. One could
-	 * replace the container completely, extend it, or replace several parts of it. Note that this method is available
-	 * for all types of plugins.
+	 * This methods allows to replace the UI Renderer (see src/UI) of ILIAS after initialization
+	 * by returning a closure returning a custom renderer. E.g:
 	 *
-	 * Important: Note that plugins might conflict by extending the $DIC if they try to extend the same component in
-	 * the same context. Therefore it might by wise to be as specific as possible in context and in the component
-	 * one is overwriting.
+	 * return function(\ILIAS\DI\Container $c){
+	 *   return new CustomRenderer();
+	 * };
 	 *
-	 * @param \ILIAS\DI\Container $DIC
-	 * @return \ILIAS\DI\Container
+	 * Note: Note that plugins might conflict by replacing the renderer, so only use if you
+	 * are sure, that no other plugin will do this for a given context.
+	 *
+	 * @param \ILIAS\DI\Container $dic
+	 * @return Closure
 	 */
-	public function afterClientInitialization(\ILIAS\DI\Container $DIC): \ILIAS\DI\Container {
+	public function exchangeUIRendererAfterInitialization(\ILIAS\DI\Container $dic):Closure{
 		//Be as specific as possible with giving a context, to prevent plugins from creating conflicts in the DIC
-		switch($_GET["UIDemo"]){
-			//Replace the DefaultRenderer with a JsonRenderer, that echos parts of the page as json. Note that
-			//that now items are rendered in vain this way.
-			case "JsonRenderer":
-				$DIC->extend("ui.renderer", function(Renderer $renderer,\ILIAS\DI\Container  $c){
-					return new JsonRenderer();
-				});
-				break;
-			//Replace the MetaBar with a Custom one and provide an own renderer for this Custom Metabar
-			case "CustomMetaBar":
-				$DIC->extend("ui.factory.maincontrols", function(DefaultMainControlsFactory $factory, \ILIAS\DI\Container  $c){
-					return new CustomMetaBarFactory(
-						$c['ui.signal_generator'],
-						$c['ui.factory.maincontrols.slate']
-					);
-				});
+		if($_GET["UIDemo"] == "JsonRenderer"){
+			return function(\ILIAS\DI\Container $c){
+				return new JsonRenderer();
+			};
 		}
+		return parent::exchangeUIRendererAfterInitialization( $dic);
+	}
 
-		return $DIC;
+	/**
+	 * This methods allows to replace some factory for UI Components (see src/UI) of ILIAS
+	 * after initialization by returning a closure returning a custom factory. E.g:
+	 *
+	 * if($key == "ui.factory.nameOfFactory"){
+	 *    return function(\ILIAS\DI\Container  $c){
+	 *       return new CustomFactory($c['ui.signal_generator'],$c['ui.factory.maincontrols.slate']);
+	 *    };
+	 * }
+	 *
+	 * Note: Note that plugins might conflict by replacing the same factory, so only use if you
+	 * are sure, that no other plugin will do this for a given context.
+	 *
+	 * @param string $dic_key
+	 * @param \ILIAS\DI\Container $dic
+	 * @return Closure
+	 */
+	public function exchangeUIFactoryAfterInitialization(string $key, \ILIAS\DI\Container $dic):Closure{
+		//Be as specific as possible with giving a context, to prevent plugins from creating conflicts in the DIC
+		if($key == "ui.factory.maincontrols" && $_GET["UIDemo"] == "CustomMetaBar"){
+			return function(\ILIAS\DI\Container  $c){
+				return new CustomMetaBarFactory(
+					$c['ui.signal_generator'],
+					$c['ui.factory.maincontrols.slate']
+				);
+			};
+		}
+		return parent::exchangeUIFactoryAfterInitialization($key,$dic);
 	}
 }
